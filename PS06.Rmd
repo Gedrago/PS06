@@ -27,9 +27,6 @@ library(gridExtra)
 ```
 
 
-
-
-
 # Collaboration
 
 Please indicate who you collaborated with on this assignment: 
