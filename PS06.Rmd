@@ -1,6 +1,6 @@
 ---
 title: "STAT/MATH 495: Problem Set 06"
-author: "WRITE YOUR NAME HERE"
+author: "MERON GEDRAGO"
 date: "2017-10-17"
 output:
   html_document:
@@ -22,6 +22,8 @@ set.seed(76)
 library(tidyverse)
 library(broom)
 library(knitr)
+library(dplyr)
+library(gridExtra)
 ```
 
 
@@ -31,9 +33,6 @@ library(knitr)
 # Collaboration
 
 Please indicate who you collaborated with on this assignment: 
-
-
-
 
 
 # Setup
@@ -75,10 +74,10 @@ generate_sample <- function(f, n, sigma) {
   )
   # Recall: We don't observe f(x) and epsilon, just (x, y)
   sample <- sample %>% 
-    select(x, y)
-  
+    select(x, y) 
   return(sample)
 }
+
 ```
 
 Define
@@ -87,17 +86,46 @@ Define
 $n=100$ to keep plots uncrowded. Here we boost to $n=500$
 * Number of samples of size $n$ to consider
 
-```{r}
-n <- 500
-n_sample <- 10000
-```
-
 
 # Computation
 
-```{r}
+We then construct the two models to predict the y value at x=0.95 using df=2 and df=99. 
+```{r, include=FALSE}
+for(i in 1:50) {
+   sampled_points <-  generate_sample(f, 500, sigma)
+    fitted_df_99 <- smooth.spline(x=sampled_points$x, y=sampled_points$y, df=99)
+    fitted_df_2 <- smooth.spline(x=sampled_points$x, y=sampled_points$y, df=2)  
+    fitted_data2 <- augment(fitted_df_2)
+    fitted_data99 <- augment(fitted_df_99)
+}
+predictedf2 <- predict(fitted_df_2,test_set)
+as.data.frame(predictedf2)
+predictedf99 <- predict(fitted_df_99, test_set)
+as.data.frame(predictedf99)
+```
+
+
+```{r, include=FALSE}
+#finding the irreducible error, bias and variance for the spline model with df=2
+irrdf2 <- sigma^2
+Biasdf2 <- (predictedf2$y - 0.9025)^2
+Vardf2 <- var(fitted_data2$.fitted)
+sum2 <- sum(irrdf2,Biasdf2,Vardf2)
+framedf2 <- matrix(c("irreducible","   bias squared","  var","  sum",irrdf2,Biasdf2,Vardf2,sum2),nrow= 2, byrow = TRUE)
+```
+
+
+```{r, include=FALSE}
+#finding the irreducible error, bias and variance for the spline model with df=99
+irrdf99 <- sigma^2
+Biasdf99 <- (predictedf99$y - 0.9025)^2
+Vardf99 <- var(fitted_data99$.fitted)
+sum99 <- sum(irrdf99,Biasdf99,Vardf99)
+sum99
+framedf99 <- matrix(c("irreducible  ","bias squared","  var","  sum",irrdf99,Biasdf99,Vardf99,sum99),nrow= 2, byrow = TRUE)
 
 ```
+
 
 
 # Tables
@@ -106,7 +134,7 @@ As done in Lec 2.7, for both
 
 * An `lm` regression AKA a `smooth.splines(x, y, df=2)` model fit 
 * A `smooth.splines(x, y, df=99)` model fit 
-
+s
 output tables comparing:
 
 |  MSE| bias_squared|   var| irreducible|   sum|
@@ -116,6 +144,13 @@ output tables comparing:
 where `sum = bias_squared + var + irreducible`. You can created cleanly formatted tables like the one above by piping a data frame into `knitr::kable(digits=4)`.
 
 
+
+```{r}
+
+knitr::kable(framedf2,digits=4,caption= "output table of df =2 ", padding= 0)
+framedf99 %>% knitr::kable(digits=4 , caption = "output table of df= 99")
+
+```
 
 
 # Analysis
@@ -131,6 +166,6 @@ $x$ in this example, and not just for $$\mbox{MSE}\left[\widehat{f}(x_0)\right]
 
 **Answers**:
 
-1.
-1.
-1.
+1. We can check whether that our values are correct by looking at the pattern of the bias variance trade off. We can see the bias is relatively higher in df=2 than in df=99. 
+1.To find the MSE of all x, we can evaluate the bias of each point by finding the difference between the predicted and theoretic. Then, calculating the variance and adding all to get the MSE.
+1.I would choose the model with the 99 degrees of freedom. Since we are focusing on one point, we want more accuracy which refers to lower bias. This leads us to prefer the second row where the variance is relatively higher and the bias is relatively lower. 
